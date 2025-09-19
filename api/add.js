@@ -20,6 +20,7 @@ export default async function handler(req, res) {
     
     if (!phone || !message) {
       console.warn(`[${new Date().toISOString()}] Add API - Validation failed: Missing phone or message`);
+      res.setHeader('Content-Type', 'application/json');
       return res.status(400).json({ error: "Missing phone or message" });
     }
 
@@ -37,6 +38,7 @@ export default async function handler(req, res) {
       
       if (existingMessage) {
         console.log(`[${new Date().toISOString()}] Add API - Duplicate message found, skipping insertion for phone: ${phone}`);
+        res.setHeader('Content-Type', 'application/json');
         return res.status(200).json({ 
           status: "skipped", 
           reason: "Duplicate message already queued",
@@ -55,13 +57,16 @@ export default async function handler(req, res) {
       await col.insertOne(messageData);
       
       console.log(`[${new Date().toISOString()}] Add API - Message queued successfully for phone: ${phone}`);
+      res.setHeader('Content-Type', 'application/json');
       res.status(200).json({ status: "queued" });
     } catch (e) {
       console.error(`[${new Date().toISOString()}] Add API - Database error:`, e.message);
+      res.setHeader('Content-Type', 'application/json');
       res.status(500).json({ error: e.message });
     }
   } else {
     console.warn(`[${new Date().toISOString()}] Add API - Method not allowed: ${req.method}`);
+    res.setHeader('Content-Type', 'application/json');
     res.status(405).json({ error: "Method not allowed" });
   }
 }
