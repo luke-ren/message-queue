@@ -27,6 +27,23 @@ export default async function handler(req, res) {
       console.log(`[${new Date().toISOString()}] Add API - Connecting to database`);
       const col = await connect();
       
+      // Check if there's already a queued message with the same phone and message
+      console.log(`[${new Date().toISOString()}] Add API - Checking for duplicate message`);
+      const existingMessage = await col.findOne({
+        phone,
+        message,
+        status: "queued"
+      });
+      
+      if (existingMessage) {
+        console.log(`[${new Date().toISOString()}] Add API - Duplicate message found, skipping insertion for phone: ${phone}`);
+        return res.status(200).json({ 
+          status: "skipped", 
+          reason: "Duplicate message already queued",
+          existingMessageId: existingMessage._id
+        });
+      }
+      
       const messageData = {
         phone,
         message,
@@ -34,7 +51,7 @@ export default async function handler(req, res) {
         createdAt: new Date()
       };
       
-      console.log(`[${new Date().toISOString()}] Add API - Inserting message to queue`);
+      console.log(`[${new Date().toISOString()}] Add API - No duplicate found, inserting message to queue`);
       await col.insertOne(messageData);
       
       console.log(`[${new Date().toISOString()}] Add API - Message queued successfully for phone: ${phone}`);
